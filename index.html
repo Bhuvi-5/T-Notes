@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault Notes</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#faf8f4">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Notes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Caveat:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-page:#faf8f4;
+    --card:#ffffff;
+    --hairline:#ece7dc;
+    --hairline-strong:#ddd6c6;
+    --gold:#b8863f;
+    --gold-soft:#f6ecd9;
+    --lavender:#8b6fd6;
+    --lavender-soft:#f0ecfb;
+    --text-hi:#2a271f;
+    --text-mid:#6f6a5c;
+    --text-low:#a39d8b;
+    --radius:18px;
+    --shadow:0 2px 14px rgba(60,50,30,0.06), 0 1px 2px rgba(60,50,30,0.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg-page);
+    color:var(--text-hi);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:#ddd6c6;border-radius:10px;}
+
+  .app{max-width:520px;margin:0 auto;padding:22px 16px 100px;position:relative;}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .brand{display:flex;flex-direction:column;}
+  .brand .mark{font-family:'Fraunces',serif;font-weight:600;font-size:24px;letter-spacing:0.2px;color:var(--text-hi);}
+  .brand .mark span{color:var(--gold);}
+  .brand .sub{font-size:12px;color:var(--text-low);margin-top:2px;}
+  .icon-btn{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--card);border:1px solid var(--hairline);
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--text-hi);transition:transform .15s;
+  }
+  .icon-btn:active{transform:scale(0.93);}
+  .icon-btn svg{width:18px;height:18px;}
+
+  .search-wrap{position:relative;margin-bottom:16px;}
+  .search-wrap input{
+    width:100%;padding:14px 16px 14px 44px;border-radius:14px;
+    background:var(--card);border:1px solid var(--hairline);
+    box-shadow:var(--shadow);
+    color:var(--text-hi);font-family:'Inter';font-size:14px;outline:none;
+  }
+  .search-wrap input::placeholder{color:var(--text-low);}
+  .search-wrap svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-low);}
+
+  .tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;padding:9px 16px;border-radius:100px;font-size:13px;
+    background:var(--card);border:1px solid var(--hairline);
+    color:var(--text-mid);cursor:pointer;white-space:nowrap;
+    display:flex;align-items:center;gap:6px;
+    transition:all .18s;
+  }
+  .tab.active{background:var(--gold-soft);border-color:#e3cfa0;color:var(--gold);}
+  .tab.private{color:var(--lavender);}
+  .tab.private.active{background:var(--lavender-soft);border-color:#d6c8f4;color:var(--lavender);}
+  .tab svg{width:13px;height:13px;}
+  .tab-add{
+    flex:0 0 auto;width:36px;height:36px;border-radius:50%;
+    background:transparent;border:1px dashed var(--hairline-strong);
+    color:var(--text-low);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:360px){.grid{grid-template-columns:1fr;}}
+  .note-card{
+    border-radius:var(--radius);
+    padding:16px;
+    background:var(--card);
+    border:1px solid var(--hairline);
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    display:flex;flex-direction:column;gap:8px;
+    min-height:130px;
+    position:relative;
+    transition:transform .15s ease;
+  }
+  .note-card:active{transform:scale(0.97);}
+  .note-title{font-size:15px;font-weight:600;line-height:1.3;word-break:break-word;}
+  .note-body{font-size:13px;line-height:1.55;color:var(--text-mid);
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
+  .note-media{width:100%;height:80px;border-radius:10px;object-fit:cover;margin-top:2px;}
+  .note-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:4px;}
+  .note-date{font-size:10.5px;color:var(--text-low);}
+  .note-cat{font-size:10px;padding:3px 8px;border-radius:100px;background:var(--bg-page);color:var(--text-low);}
+  .lock-badge{position:absolute;top:12px;right:12px;color:var(--lavender);}
+  .lock-badge svg{width:14px;height:14px;}
+
+  .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-low);}
+  .empty svg{width:40px;height:40px;margin-bottom:14px;opacity:.5;}
+  .empty p{font-size:13.5px;line-height:1.6;}
+
+  .fab{
+    position:fixed;bottom:26px;right:calc(50% - 260px + 20px);
+    width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(145deg,#c99a53,var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 26px rgba(184,134,63,0.35);
+    cursor:pointer;border:none;color:#fff;
+    transition:transform .15s;
+  }
+  .fab:active{transform:scale(0.92);}
+  .fab svg{width:24px;height:24px;}
+  @media(max-width:560px){.fab{right:22px;}}
+
+  .editor{
+    position:fixed;inset:0;background:var(--bg-page);
+    display:none;flex-direction:column;z-index:50;
+  }
+  .editor.show{display:flex;}
+  .editor-top{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 16px 12px;border-bottom:1px solid var(--hairline);
+    background:var(--bg-page);flex:0 0 auto;
+  }
+  .editor-top .side-btn{
+    background:none;border:none;color:var(--text-mid);font-size:15px;cursor:pointer;
+    padding:8px 4px;font-family:'Inter';
+  }
+  .editor-top .save-btn{color:var(--gold);font-weight:600;}
+  .editor-body{flex:1 1 auto;overflow-y:auto;padding:18px 20px 40px;display:flex;flex-direction:column;}
+
+  input.title-input{
+    width:100%;background:transparent;border:none;outline:none;
+    font-family:'Fraunces',serif;font-size:26px;color:var(--text-hi);font-weight:500;
+    padding:4px 0 14px;margin-bottom:6px;
+  }
+  input.title-input::placeholder{color:var(--text-low);}
+  textarea.body-input{
+    width:100%;flex:1 1 auto;min-height:38vh;background:transparent;border:none;
+    outline:none;resize:none;color:var(--text-hi);font-size:16px;line-height:1.75;
+    padding:6px 0;
+  }
+  textarea.body-input::placeholder{color:var(--text-low);}
+
+  .field-label{font-size:12px;color:var(--text-low);margin:18px 0 8px;}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;}
+  .swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s;}
+  .swatch:active{transform:scale(0.9);}
+  .swatch.sel{box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--gold);}
+
+  .font-opts{display:flex;gap:8px;flex-wrap:wrap;}
+  .font-opt{padding:9px 14px;border-radius:12px;background:var(--card);border:1px solid var(--hairline);font-size:13px;color:var(--text-mid);cursor:pointer;}
+  .font-opt.sel{border-color:var(--gold);color:var(--gold);background:var(--gold-soft);}
+
+  .color-opts{display:flex;gap:8px;flex-wrap:wrap;}
+  .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+  .color-dot.sel{box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--text-hi);}
+
+  .cat-select{
+    width:100%;padding:13px 14px;border-radius:12px;background:var(--card);
+    border:1px solid var(--hairline);color:var(--text-hi);font-size:14px;outline:none;
+  }
+
+  .media-row{display:flex;gap:10px;align-items:center;}
+  .media-btn{
+    display:flex;align-items:center;gap:6px;padding:11px 14px;border-radius:12px;
+    background:var(--card);border:1px solid var(--hairline);color:var(--text-mid);font-size:13px;cursor:pointer;
+  }
+  .media-btn svg{width:15px;height:15px;}
+  .media-preview{margin-top:12px;position:relative;}
+  .media-preview img,.media-preview video{width:100%;border-radius:12px;max-height:200px;object-fit:cover;}
+  .media-remove{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;}
+  .media-remove svg{width:13px;height:13px;}
+
+  .lock-toggle{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--card);border:1px solid var(--hairline);border-radius:14px;margin-top:16px;}
+  .lock-toggle-label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-mid);}
+  .lock-toggle-label svg{width:15px;height:15px;color:var(--lavender);}
+  .switch{width:42px;height:24px;border-radius:100px;background:#e4dfd1;position:relative;cursor:pointer;transition:background .2s;}
+  .switch.on{background:var(--lavender);}
+  .switch .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;}
+  .switch.on .knob{left:20px;}
+
+  .btn{width:100%;padding:15px;border-radius:14px;border:none;font-size:14.5px;font-weight:500;cursor:pointer;font-family:'Inter';}
+  .btn-danger{background:#fbeceb;border:1px solid #f3d3d0;color:#c1493f;margin-top:22px;}
+  .btn:active{transform:scale(0.98);}
+
+  .pw-modal{
+    position:fixed;inset:0;background:rgba(30,26,18,0.35);
+    display:none;align-items:center;justify-content:center;z-index:60;padding:24px;
+  }
+  .pw-modal.show{display:flex;}
+  .pw-card{
+    width:100%;max-width:340px;background:var(--card);
+    border:1px solid var(--hairline);border-radius:22px;padding:28px 22px;text-align:center;
+    box-shadow:0 20px 50px rgba(60,50,30,0.18);
+  }
+  .pw-card svg{width:34px;height:34px;color:var(--lavender);margin-bottom:12px;}
+  .pw-card h3{font-family:'Fraunces',serif;font-size:18px;margin-bottom:6px;color:var(--text-hi);}
+  .pw-card p{font-size:12.5px;color:var(--text-low);margin-bottom:18px;}
+  .pw-card input{
+    width:100%;padding:13px;border-radius:12px;background:var(--bg-page);border:1px solid var(--hairline);
+    color:var(--text-hi);text-align:center;letter-spacing:3px;font-size:16px;outline:none;margin-bottom:8px;
+  }
+  .pw-error{font-size:12px;color:#c1493f;min-height:16px;margin-bottom:8px;}
+  .pw-actions{display:flex;gap:10px;margin-top:6px;}
+  .pw-actions .btn{padding:13px;font-size:14px;}
+  .btn-ghost{background:var(--bg-page);border:1px solid var(--hairline);color:var(--text-mid);}
+  .btn-primary{background:linear-gradient(145deg,#c99a53,var(--gold));color:#fff;}
+
+  .toast{
+    position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--text-hi);padding:11px 20px;
+    border-radius:100px;font-size:13px;color:#fff;opacity:0;transition:all .25s;z-index:70;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="mark">notes<span>.</span></div>
+      <div class="sub" id="noteCount">0 notes</div>
+    </div>
+    <div class="icon-btn" id="lockAllBtn" title="Lock private notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+    </div>
+  </header>
+
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input type="text" id="searchInput" placeholder="Search notes">
+  </div>
+
+  <div class="tabs" id="tabsRow"></div>
+
+  <div class="grid" id="notesGrid"></div>
+</div>
+
+<button class="fab" id="addBtn" aria-label="Add note">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="editor" id="editor"></div>
+
+<div class="pw-modal" id="pwModal">
+  <div class="pw-card" id="pwCard"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'vaultnotes:data';
+const FONTS = [
+  {id:'sans', label:'Clean', family:"'Inter',sans-serif"},
+  {id:'serif', label:'Elegant', family:"'Fraunces',serif"},
+  {id:'hand', label:'Handwritten', family:"'Caveat',cursive"},
+  {id:'mono', label:'Typewriter', family:"'JetBrains Mono',monospace"}
+];
+const NOTE_COLORS = [
+  {id:'white', bg:'#ffffff', border:'#ece7dc', swatch:'#ffffff'},
+  {id:'gold', bg:'#fdf6e8', border:'#f0dfb5', swatch:'#e3c281'},
+  {id:'rose', bg:'#fdf0f1', border:'#f5d6d8', swatch:'#e0808c'},
+  {id:'sage', bg:'#f2f7ee', border:'#d9e8cf', swatch:'#8fb977'},
+  {id:'sky', bg:'#eef5fb', border:'#d1e3f2', swatch:'#79a9d6'},
+  {id:'lavender', bg:'#f3eefc', border:'#ddd0f4', swatch:'#a382e6'}
+];
+const TEXT_COLORS = ['#2a271f','#b8863f','#c1495c','#4f8a4a','#3a72a8','#7451c4'];
+
+let state = {
+  categories: ['All','Personal','Work','Ideas'],
+  notes: [],
+  privatePasswordHash: null,
+  privateUnlocked: false
+};
+let activeTab = 'All';
+let editingId = null;
+let draft = null;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function hash(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = ((h<<5)-h)+str.charCodeAt(i); h|=0; }
+  return String(h);
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+    }
+  }catch(e){}
+  render();
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ toast("Couldn't save. Storage may be full."); }
+}
+function fontFamily(id){ return (FONTS.find(f=>f.id===id)||FONTS[0]).family; }
+function colorSet(id){ return NOTE_COLORS.find(c=>c.id===id)||NOTE_COLORS[0]; }
+
+function renderTabs(){
+  const row = document.getElementById('tabsRow');
+  row.innerHTML = '';
+  state.categories.forEach(cat=>{
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (cat===activeTab ? ' active':'');
+    tab.textContent = cat;
+    tab.onclick = ()=>{ activeTab = cat; render(); };
+    row.appendChild(tab);
+  });
+  const priv = document.createElement('div');
+  priv.className = 'tab private' + (activeTab==='Private' ? ' active':'');
+  priv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg> Private';
+  priv.onclick = openPrivateTab;
+  row.appendChild(priv);
+
+  const addCat = document.createElement('div');
+  addCat.className = 'tab-add';
+  addCat.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+  addCat.onclick = addCategory;
+  row.appendChild(addCat);
+}
+
+function addCategory(){
+  const name = prompt('New category name');
+  if(name && name.trim() && !state.categories.includes(name.trim())){
+    state.categories.push(name.trim());
+    saveState();
+    render();
+  }
+}
+
+function openPrivateTab(){
+  if(!state.privatePasswordHash) showPasswordSetup();
+  else if(!state.privateUnlocked) showPasswordUnlock();
+  else { activeTab = 'Private'; render(); }
+}
+
+function showPasswordSetup(){
+  const modal = document.getElementById('pwModal');
+  const card = document.getElementById('pwCard');
+  card.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+    <h3>Set a private passcode</h3>
+    <p>This locks your private notes. Pick something you'll remember.</p>
+    <input type="password" id="pwSet1" placeholder="Enter passcode" inputmode="numeric">
+    <input type="password" id="pwSet2" placeholder="Confirm passcode" inputmode="numeric">
+    <div class="pw-error" id="pwSetErr"></div>
+    <div class="pw-actions">
+      <button class="btn btn-ghost" id="pwCancel">Cancel</button>
+      <button class="btn btn-primary" id="pwConfirm">Set passcode</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  document.getElementById('pwCancel').onclick = ()=>modal.classList.remove('show');
+  document.getElementById('pwConfirm').onclick = ()=>{
+    const p1 = document.getElementById('pwSet1').value;
+    const p2 = document.getElementById('pwSet2').value;
+    const err = document.getElementById('pwSetErr');
+    if(!p1 || p1.length<3){ err.textContent='Use at least 3 characters.'; return; }
+    if(p1!==p2){ err.textContent="Passcodes don't match."; return; }
+    state.privatePasswordHash = hash(p1);
+    state.privateUnlocked = true;
+    saveState();
+    modal.classList.remove('show');
+    activeTab = 'Private';
+    render();
+    toast('Private tab created');
+  };
+}
+
+function showPasswordUnlock(){
+  const modal = document.getElementById('pwModal');
+  const card = document.getElementById('pwCard');
+  card.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+    <h3>Enter passcode</h3>
+    <p>Unlock your private notes.</p>
+    <input type="password" id="pwUnlock" placeholder="Passcode" inputmode="numeric">
+    <div class="pw-error" id="pwUnlockErr"></div>
+    <div class="pw-actions">
+      <button class="btn btn-ghost" id="pwCancel2">Cancel</button>
+      <button class="btn btn-primary" id="pwGo">Unlock</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  const input = document.getElementById('pwUnlock');
+  input.focus();
+  document.getElementById('pwCancel2').onclick = ()=>modal.classList.remove('show');
+  const tryUnlock = ()=>{
+    const err = document.getElementById('pwUnlockErr');
+    if(hash(input.value) === state.privatePasswordHash){
+      state.privateUnlocked = true;
+      modal.classList.remove('show');
+      activeTab = 'Private';
+      render();
+    } else { err.textContent = 'Wrong passcode. Try again.'; }
+  };
+  document.getElementById('pwGo').onclick = tryUnlock;
+  input.onkeydown = (e)=>{ if(e.key==='Enter') tryUnlock(); };
+}
+
+document.getElementById('lockAllBtn').onclick = ()=>{
+  state.privateUnlocked = false;
+  if(activeTab==='Private') activeTab = 'All';
+  render();
+  toast('Private notes locked');
+};
+
+function render(){
+  renderTabs();
+  const grid = document.getElementById('notesGrid');
+  grid.innerHTML = '';
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  let list = state.notes.filter(n=>{
+    if(activeTab==='Private'){ if(!n.private) return false; }
+    else { if(n.private) return false; if(activeTab!=='All' && n.category!==activeTab) return false; }
+    if(q && !(n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q))) return false;
+    return true;
+  }).sort((a,b)=>b.updatedAt-a.updatedAt);
+
+  document.getElementById('noteCount').textContent = state.notes.filter(n=>!n.private).length + ' notes';
+
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      <p>${activeTab==='Private' ? "No private notes yet. Tap the plus button and turn on 'Make private' to add one." : "Nothing here yet. Tap the plus button to write your first note."}</p>
+    </div>`;
+    return;
+  }
+
+  list.forEach(n=>{
+    const cs = colorSet(n.color);
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.style.background = cs.bg;
+    card.style.borderColor = cs.border;
+    card.onclick = ()=>openEditor(n.id);
+    let mediaHtml = '';
+    if(n.media){
+      if(n.mediaType==='image') mediaHtml = `<img class="note-media" src="${n.media}">`;
+      else if(n.mediaType==='video') mediaHtml = `<video class="note-media" src="${n.media}" muted></video>`;
+    }
+    card.innerHTML = `
+      ${n.private ? '<div class="lock-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>' : ''}
+      <div class="note-title" style="font-family:${fontFamily(n.font)};color:${n.textColor}">${escapeHtml(n.title)||'Untitled'}</div>
+      ${mediaHtml}
+      <div class="note-body" style="font-family:${fontFamily(n.font)};color:${n.textColor}">${escapeHtml(n.body)}</div>
+      <div class="note-foot">
+        <span class="note-date">${formatDate(n.updatedAt)}</span>
+        <span class="note-cat">${n.private ? 'Private' : n.category}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s||'';
+  return d.innerHTML;
+}
+function formatDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+function openEditor(id){
+  editingId = id;
+  const existing = id ? state.notes.find(n=>n.id===id) : null;
+  draft = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: 'n'+Date.now(),
+    title:'', body:'', category: state.categories[0]||'Personal',
+    color:'white', font:'sans', textColor:'#2a271f',
+    media:null, mediaType:null, private:false,
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+  renderEditor();
+  document.getElementById('editor').classList.add('show');
+}
+
+function closeEditor(){
+  document.getElementById('editor').classList.remove('show');
+  editingId = null; draft = null;
+}
+
+function renderEditor(){
+  const ed = document.getElementById('editor');
+  ed.innerHTML = `
+    <div class="editor-top">
+      <button class="side-btn" id="fCancel">Cancel</button>
+      <button class="side-btn save-btn" id="fSave">${editingId ? 'Save' : 'Add note'}</button>
+    </div>
+    <div class="editor-body">
+      <input type="text" class="title-input" id="fTitle" placeholder="Title" value="${escapeHtml(draft.title)}" style="font-family:${fontFamily(draft.font)};color:${draft.textColor}">
+      <textarea class="body-input" id="fBody" placeholder="Start writing..." style="font-family:${fontFamily(draft.font)};color:${draft.textColor}">${escapeHtml(draft.body)}</textarea>
+
+      <div class="field-label">Category</div>
+      <select class="cat-select" id="fCat">
+        ${state.categories.map(c=>`<option value="${c}" ${c===draft.category?'selected':''}>${c}</option>`).join('')}
+      </select>
+
+      <div class="field-label">Note color</div>
+      <div class="swatches" id="fSwatches">
+        ${NOTE_COLORS.map(c=>`<div class="swatch ${draft.color===c.id?'sel':''}" data-c="${c.id}" style="background:${c.swatch};border:1px solid ${c.border}"></div>`).join('')}
+      </div>
+
+      <div class="field-label">Font style</div>
+      <div class="font-opts" id="fFonts">
+        ${FONTS.map(f=>`<div class="font-opt ${draft.font===f.id?'sel':''}" data-f="${f.id}" style="font-family:${f.family}">${f.label}</div>`).join('')}
+      </div>
+
+      <div class="field-label">Text color</div>
+      <div class="color-opts" id="fTextColors">
+        ${TEXT_COLORS.map(tc=>`<div class="color-dot ${draft.textColor===tc?'sel':''}" data-tc="${tc}" style="background:${tc}"></div>`).join('')}
+      </div>
+
+      <div class="field-label">Media</div>
+      <div class="media-row">
+        <label class="media-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-4 4-3-3-5 5"/></svg> Photo<input type="file" accept="image/*" id="fImage" style="display:none"></label>
+        <label class="media-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-2v10l-4-2"/></svg> Video<input type="file" accept="video/*" id="fVideo" style="display:none"></label>
+      </div>
+      <div id="mediaPreviewWrap"></div>
+
+      <div class="lock-toggle">
+        <div class="lock-toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+          Make private
+        </div>
+        <div class="switch ${draft.private?'on':''}" id="fPrivate"><div class="knob"></div></div>
+      </div>
+
+      ${editingId ? '<button class="btn btn-danger" id="fDelete">Delete note</button>' : ''}
+    </div>
+  `;
+  renderMediaPreview();
+
+  document.getElementById('fSwatches').querySelectorAll('.swatch').forEach(el=>{
+    el.onclick = ()=>{ syncFromInputs(); draft.color = el.dataset.c; renderEditor(); };
+  });
+  document.getElementById('fFonts').querySelectorAll('.font-opt').forEach(el=>{
+    el.onclick = ()=>{ syncFromInputs(); draft.font = el.dataset.f; renderEditor(); };
+  });
+  document.getElementById('fTextColors').querySelectorAll('.color-dot').forEach(el=>{
+    el.onclick = ()=>{ syncFromInputs(); draft.textColor = el.dataset.tc; renderEditor(); };
+  });
+  document.getElementById('fPrivate').onclick = ()=>{
+    syncFromInputs();
+    if(!draft.private && !state.privatePasswordHash){ showPasswordSetup(); draft.private = true; }
+    else draft.private = !draft.private;
+    renderEditor();
+  };
+  document.getElementById('fImage').onchange = (e)=>handleMedia(e,'image');
+  document.getElementById('fVideo').onchange = (e)=>handleMedia(e,'video');
+  if(editingId) document.getElementById('fDelete').onclick = ()=>{ syncFromInputs(); deleteNote(); };
+  document.getElementById('fCancel').onclick = closeEditor;
+  document.getElementById('fSave').onclick = saveNote;
+}
+
+function syncFromInputs(){
+  const t = document.getElementById('fTitle');
+  const b = document.getElementById('fBody');
+  const c = document.getElementById('fCat');
+  if(t) draft.title = t.value;
+  if(b) draft.body = b.value;
+  if(c) draft.category = c.value;
+}
+
+function renderMediaPreview(){
+  const wrap = document.getElementById('mediaPreviewWrap');
+  if(!draft.media){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = `<div class="media-preview">
+    ${draft.mediaType==='image' ? `<img src="${draft.media}">` : `<video src="${draft.media}" controls></video>`}
+    <div class="media-remove" id="fMediaRemove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+  </div>`;
+  document.getElementById('fMediaRemove').onclick = ()=>{ draft.media=null; draft.mediaType=null; renderMediaPreview(); };
+}
+
+function handleMedia(e, type){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 4*1024*1024){ toast('That file is too large. Keep it under 4MB.'); return; }
+  syncFromInputs();
+  const reader = new FileReader();
+  reader.onload = ()=>{ draft.media = reader.result; draft.mediaType = type; renderMediaPreview(); };
+  reader.readAsDataURL(file);
+}
+
+function saveNote(){
+  syncFromInputs();
+  const title = draft.title.trim();
+  const body = draft.body.trim();
+  if(!title && !body){ toast('Write something before saving.'); return; }
+  draft.title = title;
+  draft.body = body;
+  draft.updatedAt = Date.now();
+
+  const idx = state.notes.findIndex(n=>n.id===draft.id);
+  if(idx>=0) state.notes[idx] = draft;
+  else state.notes.push(draft);
+
+  saveState();
+  closeEditor();
+  activeTab = draft.private ? 'Private' : draft.category;
+  render();
+  toast(editingId ? 'Note updated' : 'Note added');
+}
+
+function deleteNote(){
+  if(!confirm('Delete this note? This cannot be undone.')) return;
+  state.notes = state.notes.filter(n=>n.id!==draft.id);
+  saveState();
+  closeEditor();
+  render();
+  toast('Note deleted');
+}
+
+document.getElementById('addBtn').onclick = ()=>openEditor(null);
+document.getElementById('pwModal').onclick = (e)=>{ if(e.target.id==='pwModal') e.currentTarget.classList.remove('show'); };
+document.getElementById('searchInput').oninput = render;
+
+loadState();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
